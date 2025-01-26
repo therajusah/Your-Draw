@@ -1,5 +1,5 @@
 import { WebSocket, WebSocketServer } from 'ws';
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { JWT_SECRET } from '@repo/backend-common/config';
 import { prismaClient } from "@repo/db/client";
 
@@ -29,6 +29,7 @@ function checkUser(token: string): string | null {
   } catch(e) {
     return null;
   }
+  return null;
 }
 
 wss.on('connection', function connection(ws, request) {
@@ -87,24 +88,18 @@ wss.on('connection', function connection(ws, request) {
         }
       });
 
-    //  
-    
-
-const roomUsers = users.filter(user => user.rooms.includes(roomId));
-roomUsers.forEach(user => {
-  try {
-    user.ws.send(JSON.stringify({
-      type: "chat",
-      message: message,
-      roomId,
-      senderId: userId,
-    }));
-  } catch (err) {
-    console.error("Error sending message:", err);
-  }
-});
+      users.forEach(user => {
+        if (user.rooms.includes(roomId)) {
+          user.ws.send(JSON.stringify({
+            type: "chat",
+            message: message,
+            roomId
+          }))
+        }
+      })
     }
 
   });
 
 });
+

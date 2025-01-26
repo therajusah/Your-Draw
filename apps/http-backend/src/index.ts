@@ -2,7 +2,6 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-
 import { JWT_SECRET } from "@repo/backend-common/config";
 import { middleware } from "./middleware";
 import { CreateUserSchema, SigninSchema, CreateRoomSchema } from "@repo/common/types";
@@ -24,7 +23,7 @@ app.post("/signup", async (req, res) => {
         })
         return;
     }
-   try {
+    try {
         const hashedPassword = await bcrypt.hash(parsedData.data.password, 10);
         const user = await prismaClient.user.create({
             data: {
@@ -37,11 +36,11 @@ app.post("/signup", async (req, res) => {
         res.json({
             userId: user.id
         });
-   } catch (error) {
-       res.json({
-           message: "User already exists"
-       })
-   }
+    } catch (error) {
+        res.json({
+            message: "User already exists"
+        })
+    }
 });
 
 app.post("/signin", async (req, res) => {
@@ -52,7 +51,7 @@ app.post("/signin", async (req, res) => {
         })
         return;
     }
-    
+
     const user = await prismaClient.user.findUnique({
         where: {
             email: parsedData.data.username
@@ -65,7 +64,7 @@ app.post("/signin", async (req, res) => {
         return;
     }
     const passwordMatch = await bcrypt.compare(parsedData.data.password, user.password);
-    
+
     if (!passwordMatch) {
         res.status(403).json({
             message: "Invalid username or password"
@@ -112,6 +111,23 @@ app.post("/room", middleware, async (req, res) => {
         });
     }
 });
+
+
+app.get("/chats/:roomId", async (req, res) => {
+    const roomId = Number(req.params.roomId);
+    const messages = await prismaClient.chat.findMany({
+        where: {
+         roomId: roomId,
+        },
+        orderBy: {
+            id: "desc"
+        },
+        take: 50
+    })
+    res.json({
+        messages
+    })
+})
 
 app.post("/signout", (req, res) => {
     res.send("Signout route");
